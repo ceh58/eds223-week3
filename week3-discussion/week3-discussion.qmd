@@ -1,0 +1,115 @@
+---
+title: "Week 3 Discussion"
+author: "Carmen"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(here)
+library(tidyverse)
+library(sf)
+library(tmap)
+```
+
+```{r}
+sb_protected_areas <- read_sf(here::here("data", "cpad_super_units_sb.shp")) %>% 
+  st_transform("ESRI:102009")
+
+sb_city_boundaries <- read_sf(here::here("data", "sb_city_boundaries_2003.shp")) %>%
+  st_transform("ESRI:102009")
+
+sb_county_boundary <- read_sf(here::here("data", "sb_county_boundary_2020.shp")) %>%
+  st_transform("ESRI:102009")
+
+aves <- read_sf(here::here("data", "aves_observations_2020_2024.shp")) %>%
+  st_transform("ESRI:102009")
+```
+
+```{r}
+# Check that the CRS match
+if (st_crs(sb_protected_areas) == st_crs(sb_city_boundaries)) {
+  print("The CRS matches! Good to go.")
+} else {
+  warning("The CRS does not match! Don't forget to transform.")
+}
+
+if (st_crs(sb_protected_areas) == st_crs(sb_county_boundary)) {
+  print("The CRS matches! Good to go.")
+} else {
+  warning("The CRS does not match! Don't forget to transform.")
+}
+
+if (st_crs(sb_protected_areas) == st_crs(aves)) {
+  print("The CRS matches! Good to go.")
+} else {
+  warning("The CRS does not match! Don't forget to transform.")
+}
+```
+
+```{r}
+protected_birds <- st_join(aves, sb_protected_areas) 
+
+tm_shape(sb_protected_areas) +
+  tm_polygons() +
+tm_shape(protected_birds) +
+  tm_dots()
+
+protected_birds_obs <- protected_birds %>%
+  select(UNIT_NAME, obsrvd_) %>%
+  group_by(UNIT_NAME) %>%
+  reframe(obs = n()) %>%
+   st_drop_geometry()
+```
+
+```{r}
+# Check units
+st_crs(sb_protected_areas)$units # meters
+```
+
+```{r}
+PAs_5km <- st_buffer(sb_protected_areas, dist = 5000)
+```
+
+```{r}
+aves_PAs_5km <- PAs_5km[aves, ] # what intersects
+nrow(aves_PAs_5km)
+```
+
+```{r}
+st_crs(sb_city_boundaries)$units
+
+santa_barbara <- sb_city_boundaries %>%
+  filter(NAME == "Santa Barbara")
+  
+SB_15km <- st_buffer(santa_barbara, dist = 15000)
+PA_SB_15km <- SB_15km[sb_protected_areas, ]
+nrow(PA_SB_15km)
+
+goleta <- sb_city_boundaries %>%
+  filter(NAME == "Goleta") %>%
+  st_join(sb_protected_areas, goleta)
+  
+GL_15km <- st_buffer(goleta, dist = 15000)
+PA_GL_15km <- GL_15km[sb_protected_areas, ]
+nrow(PA_SB_15km)
+```
+
+```{r}
+sb_gl <- st_join(sb_city_boundaries, sb_protected_areas) %>%
+  filter(NAME == "Goleta")
+
+gl_15km <- st_buffer(sb_gl, dist = 15000)
+pa_gl_15km <- gl_15km[sb_protected_areas, ]
+nrow(pa_gl_15km)
+
+```
+
+Use this for hw??
+```{r}
+redlining_cbjs<- ejscreen_la %>%
+  st_filter(y = holc, .predicate = st_within)
+```
+

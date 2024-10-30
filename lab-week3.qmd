@@ -32,7 +32,7 @@ tm_shape(nz_height) +
 ```
 
 ```{r}
-# Subset nx_heights to those that intersect with canterbury
+# Subset nz_heights to those that intersect with canterbury
 c_height1 <- nz_height[canterbury, ] #for rows canterbury, select all columns
 
 #nz_height[canterbury, , op = st_disjoint] to find all the points not in canterbury
